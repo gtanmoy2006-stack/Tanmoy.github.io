@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For My Valentine</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Nunito:wght@400;700&display=swap');
+
+        body {
+            background-color: #ffe6e9;
+            font-family: 'Nunito', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        h1 {
+            font-family: 'Dancing Script', cursive;
+            color: #d6336c;
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        p.subtitle {
+            color: #888;
+            margin-bottom: 40px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+            position: relative;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card.locked {
+            background: #eee;
+            cursor: not-allowed;
+            filter: grayscale(100%);
+        }
+
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .date {
+            font-weight: bold;
+            color: #d6336c;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+            position: relative;
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .heart-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .heart {
+            position: absolute;
+            color: #ffb3c1;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(100vh); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="heart-bg" id="heart-bg"></div>
+
+    <h1>Happy Valentine's Week!</h1>
+    <p class="subtitle">A new surprise unlocks every day...</p>
+
+    <div class="grid" id="card-grid">
+        </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title">Title</h2>
+            <div style="font-size: 3rem; margin: 10px 0;" id="modal-emoji">❤️</div>
+            <p id="modal-message">Message goes here...</p>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION: EDIT YOUR MESSAGES HERE ---
+        const days = [
+            { date: 7, title: "Rose Day", emoji: "🌹", msg: "Like a red rose, you bring color into my life. Happy Rose Day, my love!" },
+            { date: 8, title: "Propose Day", emoji: "💍", msg: "I would choose you, over and over again. Will you be mine forever?" },
+            { date: 9, title: "Chocolate Day", emoji: "🍫", msg: "You are sweeter than the finest truffle. Happy Chocolate Day!" },
+            { date: 10, title: "Teddy Day", emoji: "🧸", msg: "Sending you a virtual bear hug because you're so cuddly." },
+            { date: 11, title: "Promise Day", emoji: "🤞", msg: "I promise to always be by your side, through highs and lows." },
+            { date: 12, title: "Hug Day", emoji: "🤗", msg: "Imagine me wrapping my arms around you right now. Tightest hug ever!" },
+            { date: 13, title: "Kiss Day", emoji: "💋", msg: "Saving a thousand kisses just for you." },
+            { date: 14, title: "Valentine's Day", emoji: "❤️", msg: "You are my heart, my soul, and my forever Valentine. I love you!" }
+        ];
+
+        // SECRET PASSWORD (Change this!)
+        const PASSWORD = "love"; 
+
+        // ---------------------------------------------
+
+        // Simple Privacy Check
+        let entered = prompt("Enter the secret password to enter our world:");
+        if (entered !== PASSWORD) {
+            document.body.innerHTML = "<h1 style='margin-top:20%'>Access Denied 🔒</h1>";
+            throw new Error("Wrong password");
+        }
+
+        const today = new Date();
+        const currentDay = today.getDate(); 
+        const currentMonth = today.getMonth(); // 0 = Jan, 1 = Feb
+
+        // Helper to check if card is locked
+        // NOTE: If you want to test this before Feb, change 'currentMonth === 1' to 'currentMonth >= 0'
+        const isLocked = (date) => {
+            if (currentMonth !== 1) return true; // Only works in Feb
+            return currentDay < date;
+        };
+
+        const grid = document.getElementById('card-grid');
+
+        days.forEach(day => {
+            const card = document.createElement('div');
+            const locked = isLocked(day.date);
+            
+            card.className = card ${locked ? 'locked' : ''};
+            card.innerHTML = `
+                <div class="icon">${day.emoji}</div>
+                <div class="date">Feb ${day.date}</div>
+                <div>${day.title}</div>
+                ${locked ? '🔒' : '🔓'}
+            `;
+
+            card.onclick = () => {
+                if (locked) {
+                    alert(Not yet! Wait until Feb ${day.date} 😘);
+                } else {
+                    openModal(day);
+                }
+            };
+            grid.appendChild(card);
+        });
+
+        function openModal(day) {
+            document.getElementById('modal-title').innerText = day.title;
+            document.getElementById('modal-emoji').innerText = day.emoji;
+            document.getElementById('modal-message').innerText = day.msg;
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        // Falling Hearts Animation
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerText = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = Math.random() * 2 + 3 + 's';
+            heart.style.fontSize = Math.random() * 20 + 10 + 'px';
+            document.getElementById('heart-bg').appendChild(heart);
+            setTimeout(() => heart.remove(), 5000);
+        }
+        setInterval(createHeart, 300);
+
+    </script>
+</body>
+</html>
